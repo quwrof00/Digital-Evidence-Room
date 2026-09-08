@@ -48,12 +48,16 @@ func (d *Document) BeforeCreate(tx *gorm.DB) (err error) {
 
 // DocumentChunk represents a chunk of the parsed document for later search/RAG.
 type DocumentChunk struct {
-	ID         uuid.UUID `gorm:"type:uuid;primary_key"`
-	DocumentID uuid.UUID `gorm:"type:uuid;not null"`
-	Document   Document  `gorm:"foreignKey:DocumentID"`
-	ChunkIndex int       `gorm:"not null"`
-	Content    string
-	CreatedAt  time.Time
+	ID               uuid.UUID `gorm:"type:uuid;primary_key"`
+	DocumentID       uuid.UUID `gorm:"type:uuid;not null"`
+	Document         Document  `gorm:"foreignKey:DocumentID"`
+	ChunkIndex       int       `gorm:"not null"`
+	SourceFile       string    `gorm:"not null"`
+	FileType         string    `gorm:"not null"`
+	PageOrLineNumber *int      // Optional
+	DetectedDate     *string   // Optional
+	Content          string
+	CreatedAt        time.Time
 }
 
 // BeforeCreate sets a UUID for DocumentChunk.

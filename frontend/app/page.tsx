@@ -62,6 +62,12 @@ export default function Home() {
           >
             Documentation
           </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-white transition-colors hover:bg-blue-700 md:w-[158px]"
+            href="/upload"
+          >
+            Go to Upload
+          </a>
         </div>
       </main>
     </div>

@@ -5,14 +5,15 @@ import (
 
 	"digital-evidence-room-backend/db"
 	"digital-evidence-room-backend/handlers"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load .env file (if running locally)
-	err := godotenv.Load()
+	// Load .env file from the parent directory or current directory
+	err := godotenv.Load("../.env", ".env")
 	if err != nil {
 		log.Println("Note: No .env file found, relying on system environment variables.")
 	}
@@ -34,7 +35,7 @@ func main() {
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
-			"status": "Go Backend is running!",
+			"status":  "Go Backend is running!",
 		})
 	})
 
