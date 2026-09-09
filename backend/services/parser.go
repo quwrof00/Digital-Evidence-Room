@@ -60,25 +60,52 @@ func parseCSV(docID uuid.UUID, filename string, content []byte) error {
 
 	var chunks []models.DocumentChunk
 
-	for i, record := range records {
-		if len(record) < 3 {
-			continue // Skip invalid rows or headers
+	if len(records) < 2 {
+		return nil // Not enough rows to have headers and data
+	}
+
+	headers := records[0]
+	dateColIdx := -1
+	for i, header := range headers {
+		if strings.Contains(strings.ToLower(header), "date") {
+			dateColIdx = i
+			break
 		}
-		// Assuming Date, Desc, Amount format
-		lineNum := i + 1
-		date := strings.TrimSpace(record[0])
-		desc := strings.TrimSpace(record[1])
-		amount := strings.TrimSpace(record[2])
+	}
+
+	for i := 1; i < len(records); i++ {
+		record := records[i]
 		
-		text := fmt.Sprintf("Date: %s | Desc: %s | Amount: %s", date, desc, amount)
+		lineNum := i + 1
+		var textParts []string
+		var datePtr *string
+		
+		if dateColIdx != -1 && dateColIdx < len(record) {
+			val := strings.TrimSpace(record[dateColIdx])
+			if val != "" {
+				datePtr = &val
+			}
+		}
+
+		for j, val := range record {
+			headerName := ""
+			if j < len(headers) {
+				headerName = strings.TrimSpace(headers[j])
+			} else {
+				headerName = fmt.Sprintf("Column%d", j+1)
+			}
+			textParts = append(textParts, fmt.Sprintf("%s: %s", headerName, strings.TrimSpace(val)))
+		}
+
+		text := strings.Join(textParts, " | ")
 		
 		chunks = append(chunks, models.DocumentChunk{
 			DocumentID:       docID,
-			ChunkIndex:       i,
+			ChunkIndex:       i - 1, // 0-indexed relative to data rows
 			SourceFile:       filename,
 			FileType:         "CSV",
 			PageOrLineNumber: &lineNum,
-			DetectedDate:     &date,
+			DetectedDate:     datePtr,
 			Content:          text,
 		})
 	}
