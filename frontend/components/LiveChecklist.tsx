@@ -59,7 +59,7 @@ export default function LiveChecklist({ onComplete }: { onComplete: () => void }
   return (
     <div className="flex flex-col items-center justify-center w-full h-full max-w-2xl mx-auto p-6">
       <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold mb-4 tracking-tight" style={{ fontFamily: "Georgia, serif" }}>Processing Evidence</h2>
+        <h2 className="text-4xl font-bold mb-4 tracking-tight" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>Processing Evidence</h2>
         <p className="text-[#4a4a4a] text-lg">Our AI is analyzing your documents. Please wait...</p>
       </div>
 

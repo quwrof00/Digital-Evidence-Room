@@ -29,7 +29,7 @@ export default function ChatBox() {
     <div className="w-full md:w-96 border-l-2 border-black bg-white flex flex-col h-full z-10">
       <div className="p-4 border-b-2 border-black bg-[#fdfcf8] flex items-center gap-2">
         <Sparkle weight="fill" className="w-5 h-5 text-primary" />
-        <h3 className="font-bold text-lg" style={{ fontFamily: "Georgia, serif" }}>AI Investigator</h3>
+        <h3 className="font-bold text-lg" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>AI Investigator</h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#fdfcf8] flex flex-col">

@@ -53,7 +53,7 @@ export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => voi
       className="flex flex-col items-center justify-center w-full h-full max-w-4xl mx-auto p-6"
     >
       <div className="text-center mb-10">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight" style={{ fontFamily: "Georgia, serif" }}>Upload Evidence</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>Upload Evidence</h2>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">Drag and drop your PDFs and WhatsApp text files here to begin the investigation.</p>
       </div>
 

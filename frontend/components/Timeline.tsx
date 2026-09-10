@@ -91,37 +91,4 @@ export default function Timeline({ onEventClick }: { onEventClick: (e: Event) =>
     </div>
   );
 }
-          <motion.div 
-            variants={itemVariants}
-            key={item.id} 
-            className="relative group cursor-pointer" 
-            onClick={() => onEventClick(item)}
-          >
-            {/* Timeline dot */}
-            <div className={cn(
-              "absolute -left-[35px] w-4 h-4 rounded-full border-2 bg-background transition-all duration-300",
-              item.isContradiction 
-                ? "border-red-500 bg-red-500 animate-pulse shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
-                : "border-black group-hover:bg-primary group-hover:scale-125 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-            )} />
-            
-            <div className={cn(
-              "p-6 rounded-2xl border-2 transition-all duration-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]",
-              item.isContradiction 
-                ? "bg-white border-red-500" 
-                : "bg-white border-black hover:border-primary"
-            )}>
-              <div className={cn(
-                "text-sm font-bold mb-2 uppercase tracking-wider",
-                item.isContradiction ? "text-red-500" : "text-primary"
-              )}>
-                {item.date}
-              </div>
-              <p className="text-black text-lg font-medium">{item.description}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
+

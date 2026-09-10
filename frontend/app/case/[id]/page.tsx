@@ -26,7 +26,7 @@ export default function CaseWorkspace() {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-semibold">Back</span>
           </Link>
-          <h1 className="font-bold text-xl border-l-2 border-black pl-6" style={{ fontFamily: "Georgia, serif" }}>Investigation Workspace</h1>
+          <h1 className="font-bold text-xl border-l-2 border-black pl-6" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>Investigation Workspace</h1>
         </header>
 
         {/* Phase Container */}

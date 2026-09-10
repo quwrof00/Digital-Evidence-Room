@@ -1,28 +1,42 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import heroBg from "@/public/hero-bg.png";
 import { ArrowRight, Scales } from "@phosphor-icons/react/dist/ssr";
 import { motion } from "framer-motion";
 
 export default function Home() {
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
+  const pageFlip = {
+    hidden: { 
+      opacity: 0, 
+      rotateX: -90, 
+      transformOrigin: "top center",
+      perspective: 1200
+    },
+    show: { 
+      opacity: 1, 
+      rotateX: 0, 
+      transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } 
     }
-  };
-
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
   return (
     <main className="relative min-h-screen flex flex-col bg-[#fdfcf8] text-[#1a1a1a] overflow-hidden">
       
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <Image 
+          src={heroBg}
+          alt="Abstract Japanese garden" 
+          fill 
+          className="object-cover opacity-60 mix-blend-multiply"
+          priority
+          fetchPriority="high"
+          placeholder="blur"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#fdfcf8]" />
+      </div>
+
       {/* Top Navigation */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
@@ -51,54 +65,34 @@ export default function Home() {
       </motion.header>
 
       {/* Main Content (Top Half) */}
-      <motion.div 
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-        className="relative z-10 flex flex-col items-center text-center mt-12 md:mt-24 px-4"
-      >
-        <motion.h1 
-          variants={fadeInUp}
-          className="text-6xl md:text-8xl text-[#1a1a1a] max-w-4xl leading-tight" 
-          style={{ fontFamily: "Georgia, serif" }}
+      <div style={{ perspective: "1200px" }} className="relative z-10 flex flex-col items-center w-full mt-6 md:mt-12">
+        <motion.div 
+          variants={pageFlip}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col items-center text-center px-4"
         >
-          Uncover the truth,<br />piece by piece.
-        </motion.h1>
-        
-        <motion.p 
-          variants={fadeInUp}
-          className="mt-6 text-xl text-[#4a4a4a] font-medium max-w-2xl"
-        >
-          Upload your documents. Let AI cross-check the claims, build a timeline, and highlight the contradictions with confidence.
-        </motion.p>
-
-        <motion.div variants={fadeInUp}>
-          <Link 
-            href="/case/new" 
-            className="mt-10 flex items-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+          <h1 
+            className="text-6xl md:text-8xl font-black text-[#1a1a1a] max-w-4xl leading-[0.9]" 
+            style={{ fontFamily: '"FS Rosa", Georgia, serif' }}
           >
-            Start a new case <ArrowRight weight="bold" />
-          </Link>
-        </motion.div>
-      </motion.div>
+            Uncover the truth,<br />piece by piece.
+          </h1>
+          
+          <p className="mt-6 text-xl text-[#4a4a4a] font-medium max-w-2xl">
+            Upload your documents. Let AI cross-check the claims, build a timeline, and highlight the contradictions with confidence.
+          </p>
 
-      {/* Footer / Illustration (Bottom Half) */}
-      <motion.div 
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-        className="flex-1 w-full relative mt-16 min-h-[40vh] md:min-h-[50vh]"
-      >
-        <div 
-          className="absolute inset-0 bg-contain bg-bottom bg-no-repeat w-full"
-          style={{ 
-            backgroundImage: "url('/bg-sketch.jpg')",
-            backgroundSize: "cover",
-          }}
-        />
-        
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#fdfcf8] to-transparent z-0" />
-      </motion.div>
+          <div>
+            <Link 
+              href="/case/new" 
+              className="mt-10 flex items-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+            >
+              Start a new case <ArrowRight weight="bold" />
+            </Link>
+          </div>
+        </motion.div>
+      </div>
 
     </main>
   );

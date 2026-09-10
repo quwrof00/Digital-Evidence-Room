@@ -1,5 +1,36 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'FS Rosa';
+  src: url('/FS.Rosa/FS Rosa Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FS Rosa';
+  src: url('/FS.Rosa/FS Rosa Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FS Rosa';
+  src: url('/FS.Rosa/FS Rosa Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FS Rosa';
+  src: url('/FS.Rosa/FS Rosa Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FS Rosa';
+  src: url('/FS.Rosa/FS Rosa Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
 :root {
   --background: #fdfcf8;
   --foreground: #1a1a1a;
