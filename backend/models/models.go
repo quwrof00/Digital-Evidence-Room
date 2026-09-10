@@ -57,6 +57,8 @@ type DocumentChunk struct {
 	PageOrLineNumber *int      // Optional
 	DetectedDate     *string   // Optional
 	Content          string
+	Entities         string    `gorm:"type:jsonb"` // Extracted by Entity Agent
+	Claims           string    `gorm:"type:jsonb"` // Extracted by Claims Agent
 	CreatedAt        time.Time
 }
 

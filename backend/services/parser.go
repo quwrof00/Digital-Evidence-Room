@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -22,15 +23,18 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 		"status":   "chunking",
 		"progress": 10,
 	})
+	broadcastStatus(docID, "chunking", 10)
 
 	var err error
+	var chunks []models.DocumentChunk
+
 	switch ext {
 	case "csv":
-		err = parseCSV(docID, filename, content)
+		chunks, err = parseCSV(docID, filename, content)
 	case "txt":
-		err = parseWhatsApp(docID, filename, content)
+		chunks, err = parseWhatsApp(docID, filename, content)
 	case "pdf":
-		err = parsePDF(docID, filename, content)
+		chunks, err = parsePDF(docID, filename, content)
 	default:
 		err = fmt.Errorf("unsupported file type: %s", ext)
 	}
@@ -40,7 +44,30 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 		db.DB.Model(&models.Document{}).Where("id = ?", docID).Updates(map[string]interface{}{
 			"status": "error",
 		})
+		broadcastStatus(docID, "error", 0)
 		return
+	}
+
+	// Now run the Strands Micro-Agents on each chunk
+	broadcastStatus(docID, "Running AI Agents (Timeline, Entity, Claims)...", 50)
+	
+	for i := range chunks {
+		strands := RunStrandsAgents(docID, chunks[i].ChunkIndex, chunks[i].Content)
+		
+		// Update DetectedDate if Timeline Agent found one and we didn't already have one
+		if chunks[i].DetectedDate == nil && len(strands.Timeline.Events) > 0 {
+			date := strands.Timeline.Events[0].Timestamp
+			chunks[i].DetectedDate = &date
+		}
+		
+		// Store extracted structured data as JSONB strings
+		chunks[i].Entities = string(strands.Entities.ToJSON())
+		chunks[i].Claims = string(strands.Claims.ToJSON())
+	}
+
+	// Save all chunks to the database
+	if len(chunks) > 0 {
+		db.DB.CreateInBatches(chunks, 100)
 	}
 
 	// Mark as completed
@@ -48,20 +75,35 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 		"status":   "completed",
 		"progress": 100,
 	})
+	broadcastStatus(docID, "completed", 100)
 	log.Printf("Finished processing document ID: %s", docID)
 }
 
-func parseCSV(docID uuid.UUID, filename string, content []byte) error {
+func broadcastStatus(docID uuid.UUID, status string, progress int) {
+	msg := map[string]interface{}{
+		"type":     "status_update",
+		"doc_id":   docID,
+		"status":   status,
+		"progress": progress,
+	}
+	b, _ := json.Marshal(msg)
+	select {
+	case WsHub.Broadcast <- b:
+	default:
+	}
+}
+
+func parseCSV(docID uuid.UUID, filename string, content []byte) ([]models.DocumentChunk, error) {
 	reader := csv.NewReader(bytes.NewReader(content))
 	records, err := reader.ReadAll()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var chunks []models.DocumentChunk
 
 	if len(records) < 2 {
-		return nil // Not enough rows to have headers and data
+		return chunks, nil 
 	}
 
 	headers := records[0]
@@ -101,7 +143,7 @@ func parseCSV(docID uuid.UUID, filename string, content []byte) error {
 		
 		chunks = append(chunks, models.DocumentChunk{
 			DocumentID:       docID,
-			ChunkIndex:       i - 1, // 0-indexed relative to data rows
+			ChunkIndex:       i - 1, 
 			SourceFile:       filename,
 			FileType:         "CSV",
 			PageOrLineNumber: &lineNum,
@@ -110,17 +152,13 @@ func parseCSV(docID uuid.UUID, filename string, content []byte) error {
 		})
 	}
 
-	if len(chunks) > 0 {
-		return db.DB.Create(&chunks).Error
-	}
-	return nil
+	return chunks, nil
 }
 
-func parseWhatsApp(docID uuid.UUID, filename string, content []byte) error {
+func parseWhatsApp(docID uuid.UUID, filename string, content []byte) ([]models.DocumentChunk, error) {
 	lines := strings.Split(string(content), "\n")
 	var chunks []models.DocumentChunk
 	
-	// Format: [17:52, 08/09/2026] Shourya Agrawal: onsa
 	re := regexp.MustCompile(`^\[(.*?)\]\s+(.*?):\s+(.*)$`)
 
 	chunkIdx := 0
@@ -157,24 +195,20 @@ func parseWhatsApp(docID uuid.UUID, filename string, content []byte) error {
 		chunkIdx++
 	}
 
-	if len(chunks) > 0 {
-		return db.DB.Create(&chunks).Error
-	}
-	return nil
+	return chunks, nil
 }
 
-func parsePDF(docID uuid.UUID, filename string, content []byte) error {
+func parsePDF(docID uuid.UUID, filename string, content []byte) ([]models.DocumentChunk, error) {
 	reader := bytes.NewReader(content)
 	pdfReader, err := pdf.NewReader(reader, reader.Size())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	numPages := pdfReader.NumPage()
 	var chunks []models.DocumentChunk
 	chunkIdx := 0
 
-	// Hybrid Strategy: Read page by page. If a page is > 1500 chars, chunk it further.
 	const maxChars = 1500
 	const overlap = 150
 
@@ -207,7 +241,6 @@ func parsePDF(docID uuid.UUID, filename string, content []byte) error {
 			})
 			chunkIdx++
 		} else {
-			// Rolling token/character window for large pages
 			runes := []rune(text)
 			start := 0
 			for start < len(runes) {
@@ -235,8 +268,5 @@ func parsePDF(docID uuid.UUID, filename string, content []byte) error {
 		}
 	}
 
-	if len(chunks) > 0 {
-		return db.DB.CreateInBatches(chunks, 100).Error
-	}
-	return nil
+	return chunks, nil
 }

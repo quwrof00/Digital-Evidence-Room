@@ -5,6 +5,7 @@ import (
 
 	"digital-evidence-room-backend/db"
 	"digital-evidence-room-backend/handlers"
+	"digital-evidence-room-backend/services"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,14 @@ func main() {
 	// File Upload Endpoint
 	r.POST("/upload", handlers.UploadFile)
 
-	// TODO: We will add the /ws endpoint here next
+	// Start the WebSocket Hub
+	go services.WsHub.Run()
+
+	// WebSocket Endpoint
+	r.GET("/ws", handlers.ServeWs)
+
+	// Timeline Endpoint
+	r.GET("/timeline", handlers.GetTimeline)
 
 	// Run the server on port 8080
 	log.Println("Starting server on :8080...")

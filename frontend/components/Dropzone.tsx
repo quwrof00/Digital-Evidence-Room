@@ -18,13 +18,30 @@ export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => voi
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFilesDropped();
+      const formData = new FormData();
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        formData.append("files", e.dataTransfer.files[i]);
+      }
+      
+      try {
+        const res = await fetch("http://localhost:8080/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          onFilesDropped();
+        } else {
+          console.error("Upload failed");
+        }
+      } catch (error) {
+        console.error("Upload error", error);
+      }
     }
   }, [onFilesDropped]);
 

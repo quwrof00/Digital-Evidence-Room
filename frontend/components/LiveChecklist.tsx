@@ -15,19 +15,46 @@ const STEPS = [
 
 export default function LiveChecklist({ onComplete }: { onComplete: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isBackendDone, setIsBackendDone] = useState(false);
 
   useEffect(() => {
+    // 1. Connect to WebSocket
+    const ws = new WebSocket("ws://localhost:8080/ws");
+    
+    ws.onmessage = (event) => {
+      try {
+        // We receive multiple JSON objects separated by newlines sometimes
+        const messages = event.data.split('\n');
+        for (const msgStr of messages) {
+          if (!msgStr.trim()) continue;
+          const msg = JSON.parse(msgStr);
+          if (msg.status === "completed") {
+            setIsBackendDone(true);
+          }
+        }
+      } catch (e) {
+        console.error("WS Parse error:", e);
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
+  useEffect(() => {
+    // 2. Drive the visual checklist
     if (currentStep >= STEPS.length) {
-      setTimeout(onComplete, 1000);
+      if (isBackendDone) {
+        setTimeout(onComplete, 500);
+      }
       return;
     }
 
     const timer = setTimeout(() => {
       setCurrentStep(s => s + 1);
-    }, 1500); // 1.5s per step mock
+    }, 1000); // 1s per step mock
 
     return () => clearTimeout(timer);
-  }, [currentStep, onComplete]);
+  }, [currentStep, isBackendDone, onComplete]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full max-w-2xl mx-auto p-6">

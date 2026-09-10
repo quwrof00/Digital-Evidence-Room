@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"digital-evidence-room-backend/db"
 	"digital-evidence-room-backend/models"
