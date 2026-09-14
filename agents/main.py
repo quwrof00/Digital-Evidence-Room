@@ -31,14 +31,20 @@ class ChunkIn(BaseModel):
     content: str
     detected_date: str | None = None
     document_id: str | None = None
+    case_id: str | None = None
 
 
 class IngestRequest(BaseModel):
-    document_id: str
+    case_id: str
     chunks: list[ChunkIn]
 
 
+class ExtractRequest(BaseModel):
+    case_id: str
+
+
 class AskRequest(BaseModel):
+    case_id: str
     message: str = Field(min_length=1)
     history: list[dict[str, str]] = Field(default_factory=list)
 
@@ -50,7 +56,6 @@ def health() -> dict[str, Any]:
         "service": "strands-agents",
         "aws_region": os.getenv("AWS_REGION", "us-west-2"),
         "model": os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6"),
-        "chunks": store.snapshot()["chunk_count"],
         "credentials_hint": bool(
             os.getenv("AWS_ACCESS_KEY_ID")
             or os.getenv("AWS_PROFILE")
@@ -62,16 +67,16 @@ def health() -> dict[str, Any]:
 @app.post("/ingest")
 def ingest(req: IngestRequest) -> dict[str, Any]:
     payload = [c.model_dump() for c in req.chunks]
-    count = store.ingest_chunks(payload)
-    return {"ingested": len(payload), "total_chunks": count, "document_id": req.document_id}
+    count = store.ingest_chunks(req.case_id, payload)
+    return {"ingested": len(payload), "total_chunks": count, "case_id": req.case_id}
 
 
 @app.post("/extract")
-def extract() -> dict[str, Any]:
-    if not store.all_chunks():
+def extract(req: ExtractRequest) -> dict[str, Any]:
+    if not store.all_chunks(req.case_id):
         raise HTTPException(status_code=400, detail="No evidence ingested")
     try:
-        return run_extraction()
+        return run_extraction(req.case_id)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Strands/Bedrock failed: {exc}") from exc
 
@@ -79,12 +84,12 @@ def extract() -> dict[str, Any]:
 @app.post("/ask")
 def ask(req: AskRequest) -> dict[str, str]:
     try:
-        answer = ask_investigator(req.message)
+        answer = ask_investigator(req.case_id, req.message)
         return {"answer": answer}
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Investigator failed: {exc}") from exc
 
 
 @app.get("/case")
-def case_snapshot() -> dict[str, Any]:
-    return store.snapshot()
+def case_snapshot(case_id: str) -> dict[str, Any]:
+    return store.snapshot(case_id)

@@ -22,20 +22,37 @@ const itemVariants = {
   show: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
-export default function Timeline({ onEventClick }: { onEventClick: (e: TimelineEvent) => void }) {
+export default function Timeline({ caseId, isMock, onEventClick }: { caseId?: string; isMock?: boolean; onEventClick: (e: TimelineEvent) => void }) {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isMock) {
+      setTimeline([
+        { id: "1", date: "2024-05-01", description: "John signs the contract for $100,000.", sourceText: "contract.pdf: John signs the contract for $100,000." },
+        { id: "2", date: "2024-05-15", description: "John claims he never signed a contract.", isContradiction: true, sourceText: "whatsapp_export.txt: I never signed any contract with them." },
+        { id: "3", date: "2024-06-01", description: "First payment of $50,000 received.", sourceText: "bank_statement.csv: Transfer In - $50,000" },
+      ]);
+      setLoading(false);
+      return;
+    }
+    if (!caseId) return;
+
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    fetch(`${API_URL}/timeline`)
-      .then((res) => res.json())
+    fetch(`${API_URL}/timeline?case_id=${caseId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch timeline");
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) setTimeline(data);
       })
-      .catch((err) => console.error("Error fetching timeline:", err))
+      .catch((err) => {
+        console.error("Error fetching timeline:", err);
+        setTimeline([{ id: "err", date: "Error", description: "AWS Bedrock API is currently unavailable due to account limits. Try the Sample Case for a full demo.", isContradiction: true }]);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [caseId, isMock]);
 
   return (
     <div className="flex-1 overflow-y-auto p-8 relative">

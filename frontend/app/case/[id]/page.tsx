@@ -8,25 +8,45 @@ import Timeline from "@/components/Timeline";
 import ChatBox from "@/components/ChatBox";
 import SourcePopup from "@/components/SourcePopup";
 import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Plus } from "@phosphor-icons/react/dist/ssr";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/useAuth";
 
 type Phase = "upload" | "processing" | "dashboard";
 
 export default function CaseWorkspace() {
-  const [phase, setPhase] = useState<Phase>("upload");
+  const params = useParams();
+  const router = useRouter();
+  const caseId = params.id as string;
+  const userId = useAuth();
+
+  const [phase, setPhase] = useState<Phase>(caseId === "new" ? "upload" : "dashboard");
+  const [activeCaseId, setActiveCaseId] = useState<string>(caseId);
   const [popupText, setPopupText] = useState<string | null>(null);
+
+  if (!userId) return null; // Wait for auth
 
   return (
     <ShojiDoors>
       <div className="w-full h-screen flex flex-col bg-background text-foreground">
         
         {/* Navbar */}
-        <header className="h-16 border-b-2 border-black flex items-center px-6 shrink-0 bg-[#fdfcf8] z-10">
-          <Link href="/" className="flex items-center gap-2 text-[#4a4a4a] hover:text-black transition-colors mr-6">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold">Back</span>
-          </Link>
-          <h1 className="font-bold text-xl border-l-2 border-black pl-6" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>Investigation Workspace</h1>
+        <header className="h-16 border-b-2 border-black flex items-center justify-between px-6 shrink-0 bg-[#fdfcf8] z-10">
+          <div className="flex items-center">
+            <Link href="/dashboard" className="flex items-center gap-2 text-[#4a4a4a] hover:text-black transition-colors mr-6">
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-semibold">Dashboard</span>
+            </Link>
+            <h1 className="font-bold text-xl border-l-2 border-black pl-6" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>Investigation Workspace</h1>
+          </div>
+          {phase === "dashboard" && (
+            <button 
+              onClick={() => setPhase("upload")}
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/80 transition-colors font-medium text-sm"
+            >
+              <Plus weight="bold" /> Add Evidence
+            </button>
+          )}
         </header>
 
         {/* Phase Container */}
@@ -34,24 +54,40 @@ export default function CaseWorkspace() {
           
           {phase === "upload" && (
             <div className="absolute inset-0 flex items-center justify-center animate-in fade-in zoom-in-95 duration-500">
-              <Dropzone onFilesDropped={() => setPhase("processing")} />
+              <Dropzone 
+                userId={userId} 
+                caseId={activeCaseId} 
+                onFilesDropped={(newCaseId) => {
+                  setActiveCaseId(newCaseId);
+                  setPhase("processing");
+                }} 
+              />
             </div>
           )}
 
           {phase === "processing" && (
             <div className="absolute inset-0 flex items-center justify-center animate-in fade-in zoom-in-95 duration-500">
-              <LiveChecklist onComplete={() => setPhase("dashboard")} />
+              <LiveChecklist 
+                onComplete={() => {
+                  if (caseId === "new") {
+                    router.replace(`/case/${activeCaseId}`);
+                  } else {
+                    setPhase("dashboard");
+                  }
+                }} 
+              />
             </div>
           )}
 
           {phase === "dashboard" && (
             <div className="absolute inset-0 flex animate-in slide-in-from-bottom-8 duration-700">
               <Timeline 
+                caseId={activeCaseId}
                 onEventClick={(e) => {
                   if (e.sourceText) setPopupText(e.sourceText);
                 }} 
               />
-              <ChatBox />
+              <ChatBox caseId={activeCaseId} />
             </div>
           )}
 

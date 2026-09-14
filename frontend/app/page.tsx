@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import heroBg from "@/public/hero-bg.png";
-import { ArrowRight, Scales } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Scales, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -83,12 +83,28 @@ export default function Home() {
             Upload your documents. Let AI cross-check the claims, build a timeline, and highlight the contradictions with confidence.
           </p>
 
-          <div>
+          <div className="flex items-center justify-center gap-4 mt-10">
             <Link 
               href="/case/new" 
-              className="mt-10 flex items-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+              className="flex items-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
             >
               Start a new case <ArrowRight weight="bold" />
+            </Link>
+            <Link 
+              href="/dashboard" 
+              className="flex items-center gap-3 bg-white text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+            >
+              My Cases
+            </Link>
+          </div>
+          
+          <div className="mt-8">
+            <Link 
+              href="/case/sample" 
+              className="text-[#4a4a4a] hover:text-black hover:underline transition-colors font-medium text-lg flex items-center gap-2"
+            >
+              <Sparkle weight="duotone" className="text-primary w-6 h-6" />
+              View Mock Sample Case (No AWS Required)
             </Link>
           </div>
         </motion.div>

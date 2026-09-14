@@ -60,11 +60,12 @@ type ingestChunk struct {
 	Content       string `json:"content"`
 	DetectedDate  string `json:"detected_date,omitempty"`
 	DocumentID    string `json:"document_id"`
+	CaseID        string `json:"case_id"`
 }
 
 type ingestRequest struct {
-	DocumentID string        `json:"document_id"`
-	Chunks     []ingestChunk `json:"chunks"`
+	CaseID string        `json:"case_id"`
+	Chunks []ingestChunk `json:"chunks"`
 }
 
 type extractResponse struct {
@@ -84,9 +85,9 @@ func httpClient() *http.Client {
 	return &http.Client{Timeout: 180 * time.Second}
 }
 
-func IngestAndExtract(docID uuid.UUID, chunks []ingestChunk) (*extractResponse, error) {
+func IngestAndExtract(caseID uuid.UUID, chunks []ingestChunk) (*extractResponse, error) {
 	base := strandsBaseURL()
-	body, _ := json.Marshal(ingestRequest{DocumentID: docID.String(), Chunks: chunks})
+	body, _ := json.Marshal(ingestRequest{CaseID: caseID.String(), Chunks: chunks})
 	resp, err := httpClient().Post(base+"/ingest", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("strands ingest: %w", err)
@@ -97,7 +98,8 @@ func IngestAndExtract(docID uuid.UUID, chunks []ingestChunk) (*extractResponse, 
 		return nil, fmt.Errorf("strands ingest HTTP %d", resp.StatusCode)
 	}
 
-	resp, err = httpClient().Post(base+"/extract", "application/json", bytes.NewReader([]byte("{}")))
+	reqBody := fmt.Sprintf(`{"case_id":"%s"}`, caseID.String())
+	resp, err = httpClient().Post(base+"/extract", "application/json", bytes.NewReader([]byte(reqBody)))
 	if err != nil {
 		return nil, fmt.Errorf("strands extract: %w", err)
 	}
@@ -110,7 +112,7 @@ func IngestAndExtract(docID uuid.UUID, chunks []ingestChunk) (*extractResponse, 
 	if err := json.Unmarshal(raw, &out); err != nil {
 		return nil, fmt.Errorf("strands extract json: %w", err)
 	}
-	log.Printf("Strands extract for %s: %d events, %d entities, %d claims", docID, len(out.Events), len(out.Entities), len(out.Claims))
+	log.Printf("Strands extract for case %s: %d events, %d entities, %d claims", caseID, len(out.Events), len(out.Entities), len(out.Claims))
 	return &out, nil
 }
 

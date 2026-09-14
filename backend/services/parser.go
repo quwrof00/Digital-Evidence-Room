@@ -20,7 +20,7 @@ import (
 var parseMu sync.Mutex
 
 // ParseDocument acts as the entrypoint for parsing any supported document type.
-func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
+func ParseDocument(docID uuid.UUID, caseID uuid.UUID, filename, ext string, content []byte) {
 	parseMu.Lock()
 	defer parseMu.Unlock()
 
@@ -64,6 +64,7 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 			FileType:   chunk.FileType,
 			Content:    chunk.Content,
 			DocumentID: docID.String(),
+			CaseID:     caseID.String(),
 		}
 		if chunk.DetectedDate != nil {
 			item.DetectedDate = *chunk.DetectedDate
@@ -71,7 +72,7 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 		payload = append(payload, item)
 	}
 
-	extracted, err := IngestAndExtract(docID, payload)
+	extracted, err := IngestAndExtract(caseID, payload)
 	if err != nil {
 		log.Printf("Strands agents unavailable for %s: %v (saving parser-only chunks)", docID, err)
 	} else {

@@ -27,7 +27,7 @@ func Init() {
 	fmt.Println("Connected to Database!")
 
 	// Auto Migrate the schema using GORM
-	err = DB.AutoMigrate(&models.User{}, &models.Document{}, &models.DocumentChunk{})
+	err = DB.AutoMigrate(&models.User{}, &models.Case{}, &models.Document{}, &models.DocumentChunk{})
 	if err != nil {
 		log.Fatal("Failed to auto-migrate database:", err)
 	}

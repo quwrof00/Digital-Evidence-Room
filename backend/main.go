@@ -52,6 +52,9 @@ func main() {
 	// Timeline Endpoint
 	r.GET("/timeline", handlers.GetTimeline)
 
+	// Cases Endpoint
+	r.GET("/cases", handlers.GetCases)
+
 	// Run the server on port 8080
 	log.Println("Starting server on :8080...")
 	r.Run(":8080")

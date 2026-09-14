@@ -7,19 +7,25 @@ import { motion } from "framer-motion";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-async function postFiles(files: File[]) {
+async function postFiles(files: File[], userId: string, caseId: string) {
   const formData = new FormData();
   for (const file of files) {
     formData.append("files", file);
+  }
+  formData.append("user_id", userId);
+  if (caseId !== "new") {
+    formData.append("case_id", caseId);
   }
   const res = await fetch(`${API}/upload`, { method: "POST", body: formData });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "Upload failed");
   }
+  const result = await res.json();
+  return result.case_id as string;
 }
 
-export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => void }) {
+export default function Dropzone({ userId, caseId, onFilesDropped }: { userId: string; caseId: string; onFilesDropped: (caseId: string) => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,13 +34,13 @@ export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => voi
     if (files.length === 0) return;
     setStatus(`Uploading ${files.length} file(s) for Strands analysis...`);
     try {
-      await postFiles(files);
-      onFilesDropped();
+      const newCaseId = await postFiles(files, userId, caseId);
+      onFilesDropped(newCaseId);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Upload failed";
       setStatus(message);
     }
-  }, [onFilesDropped]);
+  }, [userId, caseId, onFilesDropped]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const AGENT_URL = process.env.NEXT_PUBLIC_STRANDS_URL || "http://localhost:8000";
 
-export default function ChatBox() {
+export default function ChatBox({ caseId, isMock }: { caseId?: string; isMock?: boolean }) {
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     {
       role: "ai",
@@ -23,13 +23,31 @@ export default function ChatBox() {
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text }]);
     setBusy(true);
+
+    if (isMock) {
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { role: "ai", text: "Based on the mock evidence, John signed a contract on May 1st for $100,000, but later claimed on WhatsApp that he never signed anything. This is a clear contradiction." }]);
+        setBusy(false);
+      }, 1000);
+      return;
+    }
+
     try {
       const res = await fetch(`${AGENT_URL}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ case_id: caseId, message: text }),
       });
       const data = await res.json().catch(() => ({}));
+
+      if (res.status >= 400) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: "AWS Bedrock API is currently unavailable due to account limits. Try the Sample Case for a full demo." }
+        ]);
+        return;
+      }
+
       const answer =
         data.answer ||
         data.detail ||

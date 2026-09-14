@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from threading import Lock
+import contextvars
 
 from strands import Agent, tool
 from strands.models import BedrockModel
@@ -13,6 +14,7 @@ from json_util import parse_json_payload
 MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
 AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-west-2"))
 
+current_case_id: contextvars.ContextVar[str] = contextvars.ContextVar("current_case_id")
 
 def _model() -> BedrockModel:
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION, temperature=0.1)
@@ -107,6 +109,7 @@ def run_claims_agent(evidence_text: str) -> str:
 @tool
 def persist_extractions(timeline_json: str, entities_json: str, claims_json: str) -> str:
     """Save specialist agent JSON into the case store so the UI and investigator can use it."""
+    case_id = current_case_id.get()
     timeline = parse_json_payload(timeline_json)
     entities = parse_json_payload(entities_json)
     claims = parse_json_payload(claims_json)
@@ -119,7 +122,7 @@ def persist_extractions(timeline_json: str, entities_json: str, claims_json: str
         ents = []
     if not isinstance(cls, list):
         cls = []
-    store.set_extractions(events=events, entities=ents, claims=cls)
+    store.set_extractions(case_id, events=events, entities=ents, claims=cls)
     return json.dumps(
         {"saved_events": len(events), "saved_entities": len(ents), "saved_claims": len(cls)}
     )
@@ -128,7 +131,8 @@ def persist_extractions(timeline_json: str, entities_json: str, claims_json: str
 @tool
 def search_evidence(query: str) -> str:
     """Search ingested evidence chunks by keyword and return matching excerpts."""
-    hits = store.search(query)
+    case_id = current_case_id.get()
+    hits = store.search(case_id, query)
     slim = [
         {
             "source_file": h.get("source_file"),
@@ -143,13 +147,15 @@ def search_evidence(query: str) -> str:
 @tool
 def list_timeline() -> str:
     """Return extracted timeline events for this case."""
-    return json.dumps(store.timeline())
+    case_id = current_case_id.get()
+    return json.dumps(store.timeline(case_id))
 
 
 @tool
 def list_claims() -> str:
     """Return extracted claims and contradiction notes for this case."""
-    return json.dumps(store.claims())
+    case_id = current_case_id.get()
+    return json.dumps(store.claims(case_id))
 
 
 def orchestrator() -> Agent:
@@ -180,14 +186,15 @@ def investigator() -> Agent:
     return _investigator
 
 
-def run_extraction() -> dict:
+def run_extraction(case_id: str) -> dict:
+    current_case_id.set(case_id)
     with _extract_lock:
-        dossier = store.dossier_text()
+        dossier = store.dossier_text(case_id)
         orchestrator()(
             "Process this case dossier with all three specialist agents, then persist results.\n\n"
             + dossier
         )
-        snap = store.snapshot()
+        snap = store.snapshot(case_id)
         return {
             "events": snap["events"],
             "entities": snap["entities"],
@@ -196,6 +203,7 @@ def run_extraction() -> dict:
         }
 
 
-def ask_investigator(question: str) -> str:
+def ask_investigator(case_id: str, question: str) -> str:
+    current_case_id.set(case_id)
     result = investigator()(question)
     return str(result)

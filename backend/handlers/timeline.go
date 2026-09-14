@@ -20,14 +20,14 @@ type TimelineEvent struct {
 }
 
 func GetTimeline(c *gin.Context) {
-	var user models.User
-	if err := db.DB.First(&user, "email = ?", "sandbox@demo.com").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Dummy user not found"})
+	caseID := c.Query("case_id")
+	if caseID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "case_id is required"})
 		return
 	}
 
 	var chunks []models.DocumentChunk
-	if err := db.DB.Joins("Document").Where("\"Document\".user_id = ?", user.ID).Find(&chunks).Error; err != nil {
+	if err := db.DB.Joins("Document").Where("\"Document\".case_id = ?", caseID).Find(&chunks).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chunks"})
 		return
 	}

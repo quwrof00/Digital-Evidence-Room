@@ -25,11 +25,28 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
+// Case represents a collection of documents grouped by the user.
+type Case struct {
+	ID        uuid.UUID `gorm:"type:uuid;primary_key"`
+	UserID    string    `gorm:"not null;index"` // Stored in localStorage
+	Name      string    `gorm:"not null;default:'New Case'"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// BeforeCreate sets a UUID for Case.
+func (c *Case) BeforeCreate(tx *gorm.DB) (err error) {
+	if c.ID == uuid.Nil {
+		c.ID = uuid.New()
+	}
+	return
+}
+
 // Document represents an uploaded file.
 type Document struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null"`
-	User      User      `gorm:"foreignKey:UserID"`
+	CaseID    uuid.UUID `gorm:"type:uuid;not null"`
+	Case      Case      `gorm:"foreignKey:CaseID"`
 	Filename  string    `gorm:"not null"`
 	FileType  string    `gorm:"not null"` // e.g. 'pdf', 'csv', 'txt'
 	Status    string    `gorm:"not null;default:'pending'"` // e.g. 'pending', 'uploading', 'chunking', 'completed', 'error'

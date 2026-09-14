@@ -32,11 +32,31 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	// Find our dummy Sandbox user once
-	var user models.User
-	if err := db.DB.First(&user, "email = ?", "sandbox@demo.com").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Dummy user not found"})
+	userID := c.PostForm("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
 		return
+	}
+
+	caseIDStr := c.PostForm("case_id")
+	var caseRecord models.Case
+
+	if caseIDStr != "" {
+		// Append to existing case
+		if err := db.DB.First(&caseRecord, "id = ? AND user_id = ?", caseIDStr, userID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Case not found"})
+			return
+		}
+	} else {
+		// Create new case
+		caseRecord = models.Case{
+			UserID: userID,
+			Name:   "New Case",
+		}
+		if err := db.DB.Create(&caseRecord).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create case"})
+			return
+		}
 	}
 
 	var documentIDs []uuid.UUID
@@ -45,7 +65,7 @@ func UploadFile(c *gin.Context) {
 
 	// 3. Process each file
 	for _, fileHeader := range files {
-		docID, err := processSingleFile(fileHeader, user.ID)
+		docID, err := processSingleFile(fileHeader, caseRecord.ID)
 		if err != nil {
 			errors = append(errors, err.Error())
 			continue
@@ -58,13 +78,14 @@ func UploadFile(c *gin.Context) {
 	// Return the results
 	c.JSON(http.StatusOK, gin.H{
 		"message":      fmt.Sprintf("Successfully started processing %d files", len(processedFiles)),
+		"case_id":      caseRecord.ID,
 		"document_ids": documentIDs,
 		"errors":       errors,
 	})
 }
 
 // processSingleFile validates the file, saves metadata to DB, and starts the chunking goroutine.
-func processSingleFile(fileHeader *multipart.FileHeader, userID uuid.UUID) (uuid.UUID, error) {
+func processSingleFile(fileHeader *multipart.FileHeader, caseID uuid.UUID) (uuid.UUID, error) {
 	filename := fileHeader.Filename
 	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 
@@ -88,7 +109,7 @@ func processSingleFile(fileHeader *multipart.FileHeader, userID uuid.UUID) (uuid
 
 	// Save the metadata to the PostgreSQL database
 	doc := models.Document{
-		UserID:   userID,
+		CaseID:   caseID,
 		Filename: filename,
 		FileType: ext,
 		Status:   "uploading",
@@ -100,7 +121,7 @@ func processSingleFile(fileHeader *multipart.FileHeader, userID uuid.UUID) (uuid
 	}
 
 	// Spin up a background "Goroutine" for the heavy lifting parsing
-	go services.ParseDocument(doc.ID, filename, ext, content)
+	go services.ParseDocument(doc.ID, caseID, filename, ext, content)
 
 	return doc.ID, nil
 }
