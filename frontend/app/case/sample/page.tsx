@@ -31,7 +31,7 @@ export default function SampleCaseWorkspace() {
 
         {/* Phase Container */}
         <main className="flex-1 overflow-hidden relative bg-[#fdfcf8]">
-          <div className="absolute inset-0 flex animate-in slide-in-from-bottom-8 duration-700">
+          <div className="absolute inset-0 flex flex-col md:flex-row animate-in slide-in-from-bottom-8 duration-700">
             <Timeline 
               isMock={true}
               onEventClick={(e) => {

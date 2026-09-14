@@ -50,10 +50,7 @@ export default function Home() {
         </div>
         
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#4a4a4a]">
-          <Link href="#" className="hover:text-black transition-colors">How it works</Link>
-          <Link href="#" className="hover:text-black transition-colors">Features</Link>
-          <Link href="#" className="hover:text-black transition-colors">Pricing</Link>
-          <Link href="#" className="hover:text-black transition-colors">About us</Link>
+          <Link href="#how-it-works" className="hover:text-black transition-colors">How it works</Link>
           
           <Link 
             href="/case/new" 
@@ -83,16 +80,16 @@ export default function Home() {
             Upload your documents. Let AI cross-check the claims, build a timeline, and highlight the contradictions with confidence.
           </p>
 
-          <div className="flex items-center justify-center gap-4 mt-10">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-10">
             <Link 
               href="/case/new" 
-              className="flex items-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+              className="flex items-center justify-center gap-3 bg-[#70bfa3] text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold w-full md:w-auto"
             >
               Start a new case <ArrowRight weight="bold" />
             </Link>
             <Link 
               href="/dashboard" 
-              className="flex items-center gap-3 bg-white text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold"
+              className="flex items-center justify-center gap-3 bg-white text-black text-xl px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-semibold w-full md:w-auto"
             >
               My Cases
             </Link>
@@ -108,6 +105,42 @@ export default function Home() {
             </Link>
           </div>
         </motion.div>
+      </div>
+
+      {/* How it works Section */}
+      <div id="how-it-works" className="relative z-10 w-full max-w-6xl mx-auto mt-40 px-6 pb-32">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-black text-[#1a1a1a]" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>
+            How it works
+          </h2>
+          <p className="mt-4 text-xl text-[#4a4a4a]">Three simple steps to uncover the truth.</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-white p-8 rounded-2xl border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-12 h-12 bg-[#70bfa3] text-black font-black text-2xl flex items-center justify-center rounded-full border-2 border-black mb-6">1</div>
+            <h3 className="text-2xl font-bold mb-4">Upload Evidence</h3>
+            <p className="text-[#4a4a4a] leading-relaxed text-lg">
+              Drop in your bank statements (CSV), WhatsApp chat exports (TXT), and contracts (PDF). We process everything and send it to our specialized AI agents.
+            </p>
+          </div>
+          
+          <div className="bg-white p-8 rounded-2xl border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-12 h-12 bg-[#70bfa3] text-black font-black text-2xl flex items-center justify-center rounded-full border-2 border-black mb-6">2</div>
+            <h3 className="text-2xl font-bold mb-4">AI Analysis</h3>
+            <p className="text-[#4a4a4a] leading-relaxed text-lg">
+              Our Bedrock-powered Strands Agents (Timeline, Entity, and Claims) read through the documents, cross-reference facts, and highlight contradictions automatically.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-12 h-12 bg-[#70bfa3] text-black font-black text-2xl flex items-center justify-center rounded-full border-2 border-black mb-6">3</div>
+            <h3 className="text-2xl font-bold mb-4">Investigate</h3>
+            <p className="text-[#4a4a4a] leading-relaxed text-lg">
+              Explore the interactive chronological timeline, click on events to see the exact source text, and chat with the AI Investigator to ask specific questions.
+            </p>
+          </div>
+        </div>
       </div>
 
     </main>

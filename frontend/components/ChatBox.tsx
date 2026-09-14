@@ -67,7 +67,7 @@ export default function ChatBox({ caseId, isMock }: { caseId?: string; isMock?: 
   };
 
   return (
-    <div className="w-full md:w-96 border-l-2 border-black bg-white flex flex-col h-full z-10">
+    <div className="w-full md:w-96 border-t-2 md:border-t-0 md:border-l-2 border-black bg-white flex flex-col h-[50vh] md:h-full z-10">
       <div className="p-4 border-b-2 border-black bg-[#fdfcf8] flex items-center gap-2">
         <Sparkle weight="fill" className="w-5 h-5 text-primary" />
         <h3 className="font-bold text-lg" style={{ fontFamily: '"FS Rosa", Georgia, serif' }}>
