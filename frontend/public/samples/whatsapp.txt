@@ -1,0 +1,3 @@
+[2024-09-12 09:14] Vendor: The advance of $5000 was never paid.
+[2024-09-16 14:02] Finance: We sent the wire on Sep 16. Check the bank statement.
+[2024-10-10 11:02] Vendor: I didn't receive anything. Please do not delay the shipment.

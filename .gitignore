@@ -1,5 +1,11 @@
 .env
 .env.*
+!.env.example
 node_modules/
 backend/.env
 backend/digital-evidence-room-backend.exe
+.venv/
+venv/
+__pycache__/
+*.pyc
+agents/.venv/

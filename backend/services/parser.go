@@ -8,6 +8,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"sync"
 
 	"digital-evidence-room-backend/db"
 	"digital-evidence-room-backend/models"
@@ -16,8 +17,13 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
+var parseMu sync.Mutex
+
 // ParseDocument acts as the entrypoint for parsing any supported document type.
 func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
+	parseMu.Lock()
+	defer parseMu.Unlock()
+
 	// First update the status to "chunking"
 	db.DB.Model(&models.Document{}).Where("id = ?", docID).Updates(map[string]interface{}{
 		"status":   "chunking",
@@ -48,25 +54,63 @@ func ParseDocument(docID uuid.UUID, filename, ext string, content []byte) {
 		return
 	}
 
-	// Now run the Strands Micro-Agents on each chunk
-	broadcastStatus(docID, "Running AI Agents (Timeline, Entity, Claims)...", 50)
-	
-	for i := range chunks {
-		strands := RunStrandsAgents(docID, chunks[i].ChunkIndex, chunks[i].Content)
-		
-		// Update DetectedDate if Timeline Agent found one and we didn't already have one
-		if chunks[i].DetectedDate == nil && len(strands.Timeline.Events) > 0 {
-			date := strands.Timeline.Events[0].Timestamp
-			chunks[i].DetectedDate = &date
+	broadcastStatus(docID, "Running Strands Agents (Timeline, Entity, Claims)...", 50)
+
+	payload := make([]ingestChunk, 0, len(chunks))
+	for _, chunk := range chunks {
+		item := ingestChunk{
+			ChunkIndex: chunk.ChunkIndex,
+			SourceFile: chunk.SourceFile,
+			FileType:   chunk.FileType,
+			Content:    chunk.Content,
+			DocumentID: docID.String(),
 		}
-		
-		// Store extracted structured data as JSONB strings
-		chunks[i].Entities = string(strands.Entities.ToJSON())
-		chunks[i].Claims = string(strands.Claims.ToJSON())
+		if chunk.DetectedDate != nil {
+			item.DetectedDate = *chunk.DetectedDate
+		}
+		payload = append(payload, item)
+	}
+
+	extracted, err := IngestAndExtract(docID, payload)
+	if err != nil {
+		log.Printf("Strands agents unavailable for %s: %v (saving parser-only chunks)", docID, err)
+	} else {
+		entityJSON := string((&EntitySchema{Entities: extracted.Entities}).ToJSON())
+		claimJSON := string((&ClaimSchema{Claims: extracted.Claims}).ToJSON())
+		for i := range chunks {
+			chunks[i].Entities = entityJSON
+			chunks[i].Claims = claimJSON
+		}
+		for _, event := range extracted.Events {
+			idx := event.ChunkIndex
+			if idx >= 0 && idx < len(chunks) {
+				date := event.Timestamp
+				if date != "" && chunks[idx].DetectedDate == nil {
+					chunks[idx].DetectedDate = &date
+				}
+				if event.IsContradiction {
+					chunks[idx].IsContradiction = true
+				}
+			} else if event.Timestamp != "" && len(chunks) > 0 && chunks[0].DetectedDate == nil {
+				date := event.Timestamp
+				chunks[0].DetectedDate = &date
+				if event.IsContradiction {
+					chunks[0].IsContradiction = true
+				}
+			}
+		}
 	}
 
 	// Save all chunks to the database
 	if len(chunks) > 0 {
+		for i := range chunks {
+			if chunks[i].Entities == "" {
+				chunks[i].Entities = "{}"
+			}
+			if chunks[i].Claims == "" {
+				chunks[i].Claims = "{}"
+			}
+		}
 		db.DB.CreateInBatches(chunks, 100)
 	}
 

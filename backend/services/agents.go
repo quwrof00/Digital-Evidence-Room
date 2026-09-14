@@ -1,105 +1,130 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
-	"math/rand"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// --- JSON Schemas ---
-
 type TimelineEvent struct {
-	Timestamp   string `json:"timestamp"`
-	Description string `json:"description"`
+	Timestamp       string `json:"timestamp"`
+	Description     string `json:"description"`
+	IsContradiction bool   `json:"is_contradiction"`
+	ChunkIndex      int    `json:"chunk_index"`
+	SourceFile      string `json:"source_file"`
+}
+
+type Entity struct {
+	Type       string `json:"type"`
+	Name       string `json:"name"`
+	SourceFile string `json:"source_file"`
+}
+
+type Claim struct {
+	Assertion     string `json:"assertion"`
+	Confidence    string `json:"confidence"`
+	SourceFile    string `json:"source_file"`
+	ConflictsWith string `json:"conflicts_with"`
 }
 
 type TimelineSchema struct {
 	Events []TimelineEvent `json:"events"`
 }
 
-type Entity struct {
-	Type string `json:"type"` // e.g., "Person", "Organization", "PhoneNumber"
-	Name string `json:"name"`
-}
-
 type EntitySchema struct {
 	Entities []Entity `json:"entities"`
-}
-
-type Claim struct {
-	Assertion  string `json:"assertion"`
-	Confidence string `json:"confidence"` // e.g., "High", "Medium", "Low"
 }
 
 type ClaimSchema struct {
 	Claims []Claim `json:"claims"`
 }
 
-// ExtractedStrands represents the combined output of all 3 agents
 type ExtractedStrands struct {
 	Timeline TimelineSchema
 	Entities EntitySchema
 	Claims   ClaimSchema
 }
 
-// --- Agent Logic ---
-
-// RunStrandsAgents mocks the execution of 3 specialized LLM micro-agents on a document chunk.
-func RunStrandsAgents(docID uuid.UUID, chunkIndex int, rawContent string) ExtractedStrands {
-	// In a real implementation, we would construct 3 distinct prompts and call an LLM API 3 times
-	// e.g., prompt1 := "You are a Timeline Agent. Identify timestamps... Content: " + rawContent
-	// LLMCall(prompt1, TimelineSchema{})
-	
-	// Simulate LLM latency (in a real app, these would run concurrently via goroutines)
-	time.Sleep(500 * time.Millisecond)
-
-	// --- Mock Output Generation ---
-	// We will just generate some dummy structured data for the sake of the mock
-
-	var strands ExtractedStrands
-
-	// 1. Mock Timeline Agent
-	// Try to extract a date if it looks like one, or just default.
-	strands.Timeline = TimelineSchema{
-		Events: []TimelineEvent{
-			{Timestamp: "2026-09-01", Description: "Event mentioned in text: " + clipText(rawContent, 30)},
-		},
-	}
-
-	// 2. Mock Entity Agent
-	strands.Entities = EntitySchema{
-		Entities: []Entity{
-			{Type: "Person", Name: "John Doe"},
-			{Type: "Organization", Name: "Acme Corp"},
-		},
-	}
-	// Add some random variation
-	if rand.Float32() > 0.5 {
-		strands.Entities.Entities = append(strands.Entities.Entities, Entity{Type: "PhoneNumber", Name: "+1-555-0198"})
-	}
-
-	// 3. Mock Claims Agent
-	strands.Claims = ClaimSchema{
-		Claims: []Claim{
-			{Assertion: "Claimed that " + clipText(rawContent, 40), Confidence: "High"},
-		},
-	}
-
-	log.Printf("Strands Agents completed for Doc %s Chunk %d", docID, chunkIndex)
-	return strands
+type ingestChunk struct {
+	ChunkIndex    int    `json:"chunk_index"`
+	SourceFile    string `json:"source_file"`
+	FileType      string `json:"file_type"`
+	Content       string `json:"content"`
+	DetectedDate  string `json:"detected_date,omitempty"`
+	DocumentID    string `json:"document_id"`
 }
 
-func clipText(s string, max int) string {
-	if len(s) > max {
-		return s[:max] + "..."
-	}
-	return s
+type ingestRequest struct {
+	DocumentID string        `json:"document_id"`
+	Chunks     []ingestChunk `json:"chunks"`
 }
 
-// Helper to convert structs to JSON bytes for DB storage
+type extractResponse struct {
+	Events   []TimelineEvent `json:"events"`
+	Entities []Entity        `json:"entities"`
+	Claims   []Claim         `json:"claims"`
+}
+
+func strandsBaseURL() string {
+	if v := os.Getenv("STRANDS_URL"); v != "" {
+		return v
+	}
+	return "http://127.0.0.1:8000"
+}
+
+func httpClient() *http.Client {
+	return &http.Client{Timeout: 180 * time.Second}
+}
+
+func IngestAndExtract(docID uuid.UUID, chunks []ingestChunk) (*extractResponse, error) {
+	base := strandsBaseURL()
+	body, _ := json.Marshal(ingestRequest{DocumentID: docID.String(), Chunks: chunks})
+	resp, err := httpClient().Post(base+"/ingest", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("strands ingest: %w", err)
+	}
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("strands ingest HTTP %d", resp.StatusCode)
+	}
+
+	resp, err = httpClient().Post(base+"/extract", "application/json", bytes.NewReader([]byte("{}")))
+	if err != nil {
+		return nil, fmt.Errorf("strands extract: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("strands extract HTTP %d: %s", resp.StatusCode, string(raw))
+	}
+	var out extractResponse
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("strands extract json: %w", err)
+	}
+	log.Printf("Strands extract for %s: %d events, %d entities, %d claims", docID, len(out.Events), len(out.Entities), len(out.Claims))
+	return &out, nil
+}
+
+func ApplyExtraction(chunksLen int, extracted *extractResponse) ExtractedStrands {
+	var result ExtractedStrands
+	if extracted == nil {
+		return result
+	}
+	result.Timeline.Events = extracted.Events
+	result.Entities.Entities = extracted.Entities
+	result.Claims.Claims = extracted.Claims
+	_ = chunksLen
+	return result
+}
+
 func (es *EntitySchema) ToJSON() []byte {
 	b, _ := json.Marshal(es)
 	return b

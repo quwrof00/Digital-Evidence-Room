@@ -56,6 +56,7 @@ type DocumentChunk struct {
 	FileType         string    `gorm:"not null"`
 	PageOrLineNumber *int      // Optional
 	DetectedDate     *string   // Optional
+	IsContradiction  bool      `gorm:"default:false"`
 	Content          string
 	Entities         string    `gorm:"type:jsonb"` // Extracted by Entity Agent
 	Claims           string    `gorm:"type:jsonb"` // Extracted by Claims Agent
