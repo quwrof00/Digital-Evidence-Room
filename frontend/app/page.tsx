@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen flex flex-col bg-[#fdfcf8] text-[#1a1a1a] overflow-hidden">
       
-      <div className="absolute inset-0 pointer-events-none z-0">
+      <div className="absolute top-0 left-0 w-full h-[100vh] pointer-events-none z-0">
         <Image 
           src={heroBg}
           alt="Abstract Japanese garden" 
@@ -34,7 +34,7 @@ export default function Home() {
           fetchPriority="high"
           placeholder="blur"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#fdfcf8]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#fdfcf8]/50 to-[#fdfcf8]" />
       </div>
 
       {/* Top Navigation */}
