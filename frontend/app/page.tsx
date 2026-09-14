@@ -67,7 +67,7 @@ export default function Home() {
       {/* Main Content (Top Half) */}
       <div style={{ perspective: "1200px" }} className="relative z-10 flex flex-col items-center w-full mt-6 md:mt-12">
         <motion.div 
-          variants={pageFlip}
+          variants={pageFlip as any}
           initial="hidden"
           animate="show"
           className="flex flex-col items-center text-center px-4"

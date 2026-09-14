@@ -45,17 +45,17 @@ export default function Timeline({ onEventClick }: { onEventClick: (e: TimelineE
       {loading ? (
         <div className="text-center text-[#4a4a4a]">Loading timeline data...</div>
       ) : timeline.length === 0 ? (
-        <div className="text-center text-[#4a4a4a]">No dated events yet. Try the sample case or upload a file with dates.</div>
+        <div className="text-center text-[#4a4a4a]">No dated events yet. Upload a file with dates to get started.</div>
       ) : (
         <motion.div
-          variants={containerVariants}
+          variants={containerVariants as any}
           initial="hidden"
           animate="show"
           className="relative pl-6 border-l-2 border-[#1a1a1a] space-y-10"
         >
           {timeline.map((item) => (
             <motion.div
-              variants={itemVariants}
+              variants={itemVariants as any}
               key={item.id}
               className="relative group cursor-pointer"
               onClick={() => onEventClick(item)}

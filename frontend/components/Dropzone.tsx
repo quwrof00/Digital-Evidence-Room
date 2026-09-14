@@ -36,23 +36,6 @@ export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => voi
     }
   }, [onFilesDropped]);
 
-  const loadSampleCase = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setStatus("Loading sample WhatsApp log and bank CSV...");
-    try {
-      const [wa, csv] = await Promise.all([
-        fetch("/samples/whatsapp.txt").then((r) => r.blob()),
-        fetch("/samples/bank.csv").then((r) => r.blob()),
-      ]);
-      await startWithFiles([
-        new File([wa], "whatsapp.txt", { type: "text/plain" }),
-        new File([csv], "bank.csv", { type: "text/csv" }),
-      ]);
-    } catch {
-      setStatus("Could not load sample files.");
-    }
-  }, [startWithFiles]);
-
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -127,13 +110,6 @@ export default function Dropzone({ onFilesDropped }: { onFilesDropped: () => voi
         <p className="text-[#4a4a4a] font-medium">or click to browse</p>
       </motion.div>
 
-      <button
-        type="button"
-        onClick={loadSampleCase}
-        className="mt-6 px-6 py-3 rounded-full border-2 border-black bg-primary font-semibold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-      >
-        Load sample case
-      </button>
       {status && <p className="mt-4 text-center font-medium text-[#4a4a4a]">{status}</p>}
     </motion.div>
   );
