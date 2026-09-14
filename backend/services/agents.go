@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -74,7 +75,7 @@ type extractResponse struct {
 
 func strandsBaseURL() string {
 	if v := os.Getenv("STRANDS_URL"); v != "" {
-		return v
+		return strings.TrimRight(v, "/")
 	}
 	return "http://127.0.0.1:8000"
 }
