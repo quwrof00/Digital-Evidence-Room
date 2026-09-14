@@ -9,24 +9,30 @@ The discovery process in modern legal and insurance cases is broken. Investigato
 
 The Digital Evidence Room solves this by acting as an AI paralegal that never sleeps. It automatically cross-references documents, flags contradictions, and builds a comprehensive case profile instantly.
 
-## Why This Approach Works
-Instead of using one massive AI prompt that easily gets confused, we built a **Multi-Agent Architecture** powered by AWS Bedrock. 
+## The Microservice Architecture
+We intentionally built a decoupled, polyglot architecture to leverage the best tool for every specific job:
 
-When you upload evidence, a Supervisor Agent orchestrates three distinct Specialist Agents:
-1. **The Timeline Agent:** Extracts every dated event into a chronological master timeline.
-2. **The Entity Agent:** Maps out every person, organization, and account mentioned.
-3. **The Claims Agent:** Identifies factual assertions and explicitly flags when two pieces of evidence contradict each other.
+### 1. The Core API (Go)
+We chose **Go (Golang)** for our primary backend API because of its unmatched concurrency model (`goroutines`) and low memory footprint. Parsing large PDFs, sweeping through thousands of CSV rows, and handling multiple concurrent document uploads requires heavy, fast I/O. Go handles this background file ingestion effortlessly. Its strong typing (via GORM) guarantees that our PostgreSQL database layer remains perfectly structured and never drops evidence.
 
-By breaking down the task, we drastically improved extraction accuracy and reduced AI hallucinations. Finally, an **Investigator Agent** provides a chat interface to interrogate the evidence, using the extracted JSON data and semantic search to provide concise answers with exact source citations.
+### 2. The Agent Orchestrator (Python + Strands)
+We chose **Python** for the AI layer because its data science and LLM ecosystem is the industry standard. We built a fast, stateless FastAPI service powered by the **Strands** framework to handle AWS Bedrock LLM orchestrations.
 
-## Architecture
+Instead of using one massive AI prompt that easily gets confused, we built a **Multi-Agent Architecture**:
+*   **The Timeline Agent:** Extracts every dated event into a chronological master timeline.
+*   **The Entity Agent:** Maps out every person, organization, and account mentioned.
+*   **The Claims Agent:** Identifies factual assertions and explicitly flags when two pieces of evidence contradict each other.
 
-![Architecture Diagram](architecture.jpg)
+By breaking down the task into specialized agents, we drastically improved extraction accuracy and reduced AI hallucinations. Finally, an **Investigator Agent** provides a conversational interface to interrogate the evidence.
 
-The system uses a decoupled, microservice-based architecture:
-*   **Next.js Frontend:** A responsive workspace UI.
-*   **Go Backend API:** Handles high-performance file parsing, WebSocket connections for real-time chat, and PostgreSQL ingestion.
-*   **Python Agent Service:** A FastAPI service powered by the Strands framework to handle AWS Bedrock LLM orchestrations.
+### 3. The Workspace UI (Next.js)
+We chose **Next.js (React)** for a beautiful, responsive, and robust frontend. Combined with Tailwind CSS and Framer Motion, it delivers a premium, highly-interactive "Digital Evidence Room" experience that investigators will actually enjoy using. 
+
+## Key Features
+*   **Multi-Case Workspaces:** Investigators can create and manage multiple cases simultaneously, persisted via local session storage.
+*   **Incremental Uploads:** Append new evidence to an ongoing case at any time.
+*   **Robust Error Fallbacks:** If AWS Bedrock rate limits or permissions fail, the UI gracefully catches the errors and provides helpful fallback banners.
+*   **Interactive Mock Sample Case:** A fully hardcoded, instant-load Sample Case guarantees a perfect demonstration of the app's capabilities for judges, even without backend connectivity.
 
 ## Prerequisites
 
