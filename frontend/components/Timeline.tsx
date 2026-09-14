@@ -27,7 +27,8 @@ export default function Timeline({ onEventClick }: { onEventClick: (e: TimelineE
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8080/timeline")
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    fetch(`${API_URL}/timeline`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setTimeline(data);

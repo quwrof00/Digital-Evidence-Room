@@ -20,7 +20,9 @@ export default function LiveChecklist({ onComplete }: { onComplete: () => void }
 
   useEffect(() => {
     let cancelled = false;
-    const ws = new WebSocket("ws://localhost:8080/ws");
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const WS_URL = API_URL.replace(/^http/, "ws");
+    const ws = new WebSocket(`${WS_URL}/ws`);
     const markDone = () => {
       if (!cancelled) setIsBackendDone(true);
     };

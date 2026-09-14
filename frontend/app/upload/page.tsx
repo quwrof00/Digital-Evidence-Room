@@ -27,7 +27,8 @@ export default function UploadPage() {
 
     try {
       setStatus(`Uploading ${files.length} file(s)...`);
-      const response = await fetch("http://localhost:8080/upload", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
       });

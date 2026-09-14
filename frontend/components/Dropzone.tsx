@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-const API = "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 async function postFiles(files: File[]) {
   const formData = new FormData();
