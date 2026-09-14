@@ -10,7 +10,10 @@ The discovery process in modern legal and insurance cases is broken. Investigato
 The Digital Evidence Room solves this by acting as an AI paralegal that never sleeps. It automatically cross-references documents, flags contradictions, and builds a comprehensive case profile instantly.
 
 ## The Microservice Architecture
-We intentionally built a decoupled, polyglot architecture to leverage the best tool for every specific job:
+
+![Architecture Diagram](architecture.jpg)
+
+We intentionally built a decoupled microservice architecture to leverage the best tool for every specific job:
 
 ### 1. The Core API (Go)
 We chose **Go (Golang)** for our primary backend API because of its unmatched concurrency model (`goroutines`) and low memory footprint. Parsing large PDFs, sweeping through thousands of CSV rows, and handling multiple concurrent document uploads requires heavy, fast I/O. Go handles this background file ingestion effortlessly. Its strong typing (via GORM) guarantees that our PostgreSQL database layer remains perfectly structured and never drops evidence.
