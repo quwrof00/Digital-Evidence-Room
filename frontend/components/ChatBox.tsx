@@ -5,7 +5,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AGENT_URL = "http://localhost:8000";
+const AGENT_URL = process.env.NEXT_PUBLIC_STRANDS_URL || "http://localhost:8000";
 
 export default function ChatBox() {
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
@@ -40,7 +40,7 @@ export default function ChatBox() {
         ...prev,
         {
           role: "ai",
-          text: "Could not reach the Strands agent at localhost:8000.",
+          text: "Could not reach the Strands agent. Ensure it is running and accessible.",
         },
       ]);
     } finally {
